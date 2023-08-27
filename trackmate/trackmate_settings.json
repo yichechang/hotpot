@@ -1,0 +1,14 @@
+{
+    "detectorSettings": {
+        "DO_SUBPIXEL_LOCALIZATION": true,
+        "RADIUS": 2.5,
+        "TARGET_CHANNEL": 1,
+        "THRESHOLD": 0.0,
+        "DO_MEDIAN_FILTERING": false
+    },
+
+    "trackerSettings": {
+        
+    }
+
+}

@@ -1,0 +1,204 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<TrackMate version="7.11.1">
+  <Log>TrackMate v7.11.1 started on:
+Sat, 26 Aug 2023 17:28:47
+Please note that TrackMate is available through Fiji, and is based on a publication. If you use it successfully for your research please be so kind to cite our work:
+Ershov, D., Phan, MS., Pylvänäinen, J.W., Rigaud S.U., et al. TrackMate 7: integrating state-of-the-art segmentation algorithms into tracking pipelines. Nat Methods (2022). https://doi.org/10.1038/s41592-022-01507-1
+https://doi.org/10.1038/s41592-022-01507-1
+and / or:
+Tinevez, JY.; Perry, N. &amp; Schindelin, J. et al. (2017), 'TrackMate: An open and extensible platform for single-particle tracking.', Methods 115: 80-90, PMID 27713081.
+https://www.sciencedirect.com/science/article/pii/S1046202316303346
+
+Numerical feature analyzers:
+Spot feature analyzers:
+ - Manual spot color provides: Spot color; is manual.
+ - Spot intensity provides: Mean ch1, Median ch1, Min ch1, Max ch1, Sum ch1, Std ch1.
+ - Spot contrast and SNR provides: Ctrst ch1, SNR ch1.
+Edge feature analyzers:
+ - Directional change provides: γ rate.
+ - Edge speed provides: Speed, Disp.
+ - Edge target provides: Source ID, Target ID, Cost.
+ - Edge location provides: Edge T, Edge X, Edge Y, Edge Z.
+ - Manual edge color provides: Edge color; is manual.
+Track feature analyzers:
+ - Branching analyzer provides: N spots, N gaps, N splits, N merges, N complex, Lgst gap.
+ - Track duration provides: Duration, Track start, Track stop, Track disp.
+ - Track index provides: Index, ID.
+ - Track location provides: Track X, Track Y, Track Z.
+ - Track speed provides: Mean sp., Max speed, Min speed, Med. speed, Std speed.
+ - Track quality provides: Mean Q.
+ - Track motility analysis provides: Total dist., Max dist., Cfn. ratio, Mn. v. line, Fwd. progr., Mn. γ rate.
+
+Image region of interest:
+Image data:
+For the image named: y527_2023-08-23_1_live_C03_10_50.ome (1).tif.
+Matching file y527_2023-08-23_1_live_C03_10_50.ome (1).tif in folder: /Users/yi-che/Downloads/
+Geometry:
+  X =  392 -  818, dx = 0.0464286
+  Y =  353 -  824, dy = 0.0464286
+  Z =    0 -    0, dz = 1.00000
+  T =    0 -   99, dt = 1.00000
+
+Configured detector LoG detector with settings:
+  - target channel: 1
+  - threshold: 10.0
+  - do median filtering: true
+  - radius: 0.1
+  - do subpixel localization: true
+
+Starting detection process using 8 threads.
+Detection processes 8 frames simultaneously and allocates 1 thread per frame.
+Found 78444 spots.
+Detection done in 2.1 s.
+
+Computing spot quality histogram...
+Initial thresholding with a quality threshold above 2.7 ...
+Starting initial filtering process.
+Retained 78444 spots out of 78444.
+
+Calculating spot features...
+Calculating features done in 1.1 s.
+
+Performing spot filtering on the following features:
+No feature threshold set, kept the 78444 spots.
+
+Configured tracker Simple LAP tracker with settings:
+  - max frame gap: 3
+  - alternative linking cost factor: 1.05
+  - linking feature penalties: 
+  - linking max distance: 0.25
+  - gap closing max distance: 0.2
+  - merging feature penalties: 
+  - splitting max distance: 15.0
+  - blocking value: Infinity
+  - allow gap closing: true
+  - allow track splitting: false
+  - allow track merging: false
+  - merging max distance: 15.0
+  - splitting feature penalties: 
+  - cutoff percentile: 0.9
+  - gap closing feature penalties: 
+
+Starting tracking process.
+Tracking done in 5.0 s.
+Found 9711 tracks.
+  - avg size: 6.6 spots.
+  - min size: 2 spots.
+  - max size: 98 spots.
+
+Calculating features done in 0.6 s.
+
+Performing track filtering on the following features:
+  - on Track duration above 12.5
+Kept 1332 spots out of 9711.
+Saving data...
+Computing edge features:
+  - Directional change in 88 ms.
+  - Edge speed in 70 ms.
+  - Edge target in 68 ms.
+  - Edge location in 74 ms.
+Computation done in 300 ms.
+Computing track features:
+  - Branching analyzer in 20 ms.
+  - Track duration in 13 ms.
+  - Track index in 2 ms.
+  - Track location in 12 ms.
+  - Track speed in 16 ms.
+  - Track quality in 10 ms.
+  - Track motility analysis in 17 ms.
+Computation done in 111 ms.</Log>
+  <Model>
+  </Model>
+  <Settings>
+    <ImageData filename="y527_2023-08-23_1_live_C03_10_50.ome (1).tif" folder="/Users/yi-che/Downloads/" width="1024" height="1024" nslices="1" nframes="100" pixelwidth="0.04642857142857143" pixelheight="0.04642857142857143" voxeldepth="1.0" timeinterval="1.0" />
+    <BasicSettings xstart="392" xend="818" ystart="353" yend="824" zstart="0" zend="0" tstart="0" tend="99" />
+    <DetectorSettings DETECTOR_NAME="LOG_DETECTOR" TARGET_CHANNEL="1" RADIUS="0.1" THRESHOLD="10.0" DO_MEDIAN_FILTERING="true" DO_SUBPIXEL_LOCALIZATION="true" />
+    <InitialSpotFilter feature="QUALITY" value="2.7303903897603354" isabove="true" />
+    <SpotFilterCollection />
+    <TrackerSettings TRACKER_NAME="SIMPLE_SPARSE_LAP_TRACKER" CUTOFF_PERCENTILE="0.9" ALTERNATIVE_LINKING_COST_FACTOR="1.05" BLOCKING_VALUE="Infinity">
+      <Linking LINKING_MAX_DISTANCE="0.25">
+        <FeaturePenalties />
+      </Linking>
+      <GapClosing ALLOW_GAP_CLOSING="true" GAP_CLOSING_MAX_DISTANCE="0.2" MAX_FRAME_GAP="3">
+        <FeaturePenalties />
+      </GapClosing>
+      <TrackSplitting ALLOW_TRACK_SPLITTING="false" SPLITTING_MAX_DISTANCE="15.0">
+        <FeaturePenalties />
+      </TrackSplitting>
+      <TrackMerging ALLOW_TRACK_MERGING="false" MERGING_MAX_DISTANCE="15.0">
+        <FeaturePenalties />
+      </TrackMerging>
+    </TrackerSettings>
+    <TrackFilterCollection>
+      <Filter feature="TRACK_DURATION" value="12.489655172413794" isabove="true" />
+    </TrackFilterCollection>
+    <AnalyzerCollection>
+      <SpotAnalyzers>
+        <Analyzer key="Manual spot color" />
+        <Analyzer key="Spot intensity" />
+        <Analyzer key="Spot contrast and SNR" />
+      </SpotAnalyzers>
+      <EdgeAnalyzers>
+        <Analyzer key="Directional change" />
+        <Analyzer key="Edge speed" />
+        <Analyzer key="Edge target" />
+        <Analyzer key="Edge location" />
+        <Analyzer key="Manual edge color" />
+      </EdgeAnalyzers>
+      <TrackAnalyzers>
+        <Analyzer key="Branching analyzer" />
+        <Analyzer key="Track duration" />
+        <Analyzer key="Track index" />
+        <Analyzer key="Track location" />
+        <Analyzer key="Track speed" />
+        <Analyzer key="Track quality" />
+        <Analyzer key="Track motility analysis" />
+      </TrackAnalyzers>
+    </AnalyzerCollection>
+  </Settings>
+  <GUIState state="Actions" />
+  <DisplaySettings>{
+  "name": "CurrentDisplaySettings",
+  "spotUniformColor": "204, 51, 204, 255",
+  "spotColorByType": "DEFAULT",
+  "spotColorByFeature": "UNIFORM_COLOR",
+  "spotDisplayRadius": 1.0,
+  "spotDisplayedAsRoi": true,
+  "spotMin": 0.0,
+  "spotMax": 10.0,
+  "spotShowName": false,
+  "trackMin": 0.0,
+  "trackMax": 10.0,
+  "trackColorByType": "TRACKS",
+  "trackColorByFeature": "TRACK_INDEX",
+  "trackUniformColor": "204, 204, 51, 255",
+  "undefinedValueColor": "0, 0, 0, 255",
+  "missingValueColor": "89, 89, 89, 255",
+  "highlightColor": "51, 230, 51, 255",
+  "trackDisplayMode": "FULL",
+  "colormap": "Jet",
+  "limitZDrawingDepth": false,
+  "drawingZDepth": 10.0,
+  "fadeTracks": true,
+  "fadeTrackRange": 30,
+  "useAntialiasing": true,
+  "spotVisible": true,
+  "trackVisible": true,
+  "font": {
+    "name": "Arial",
+    "style": 1,
+    "size": 12,
+    "pointSize": 12.0,
+    "fontSerializedDataVersion": 1
+  },
+  "lineThickness": 1.0,
+  "selectionLineThickness": 4.0,
+  "trackschemeBackgroundColor1": "128, 128, 128, 255",
+  "trackschemeBackgroundColor2": "192, 192, 192, 255",
+  "trackschemeForegroundColor": "0, 0, 0, 255",
+  "trackschemeDecorationColor": "0, 0, 0, 255",
+  "trackschemeFillBox": false,
+  "spotFilled": false,
+  "spotTransparencyAlpha": 1.0
+}</DisplaySettings>
+</TrackMate>
