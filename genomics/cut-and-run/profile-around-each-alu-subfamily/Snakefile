@@ -28,6 +28,12 @@ rule all:
                          alu_name=get_checkpoint_aluname(w),
                          binsize=config['bam_to_bigwig']['binsizes'])
 
+rule all_bigwig:
+    input:
+        lambda w: expand("results/bigwig/{sample}_{binsize}bp.bw",
+                         sample=SAMPLE_NAMES,
+                         binsize=config['bam_to_bigwig']['binsizes'])
+
 rule all_matrix:
     input:
         lambda w: expand("results/matrix/{alu_name}_{binsize}bp.gz", 
@@ -53,7 +59,7 @@ rule truncate_alu_bedfile:
     shell:
         """
         if [ {params.n} == 0 ]; then
-            cp {input.bed:q} > {output.bed}
+            cp {input.bed:q} {output.bed}
         else
             head --lines {params.n} {input.bed:q} > {output.bed}
         fi
