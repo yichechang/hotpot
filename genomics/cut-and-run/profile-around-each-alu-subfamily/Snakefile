@@ -28,6 +28,11 @@ rule all:
                          alu_name=get_checkpoint_aluname(w),
                          binsize=config['bam_to_bigwig']['binsizes'])
 
+rule all_split_alu:
+    input:
+        lambda w: expand("results/alu_bed_split/{alu_name}.bed",
+                         alu_name=get_checkpoint_aluname(w))
+
 rule all_bigwig:
     input:
         lambda w: expand("results/bigwig/{sample}_{binsize}bp.bw",
@@ -40,26 +45,57 @@ rule all_matrix:
                          alu_name=get_checkpoint_aluname(w),
                          binsize=config['bam_to_bigwig']['binsizes'])
 
-rule all_split_alu:
-    input:
-        lambda w: expand("results/alu_bed_split/{alu_name}.bed",
-                         alu_name=get_checkpoint_aluname(w))
 
 
 #
 # actual workhorse rules
 #
+rule list_alu_names:
+    input:
+        config['alu_families_fasta'],
+    output:
+        "results/alu_names.txt"
+    shell:
+        """
+        awk '/^>/{{print}}' {input:q} > {output}
+        """
+
+rule alu_bedfile:
+    input:
+        alu="results/alu_names.txt",
+        rmsk=config['rmsk'],
+    output:
+        "results/hg38.alu.repeats.bed"
+    run:
+        aluList = open(input.alu,"r")
+        file = open(input.rmsk,"r")
+        fOut = open(output,"w")
+
+        aluFam=[]
+        for a in aluList:
+            name=a.split("\n")[0].split(" ")[1]
+            aluFam.append(name)
+        print(aluFam)
+        aluList.close()
+
+        for f in file:
+            x = f.split("\t")[3]
+            if x in aluFam:
+                fOut.write(f)
+        fOut.close()
+
+
 rule truncate_alu_bedfile:
     input:
-        bed=config['alu_annotation']['path']
+        bed="results/hg38.alu.repeats.bed"
     output:
         bed="results/alu.bed"
     params:
-        n=config['alu_annotation']['truncation']
+        n=config['alu_annotation_truncation']
     shell:
         """
         if [ {params.n} == 0 ]; then
-            cp {input.bed:q} {output.bed}
+            cp {input.bed} {output.bed}
         else
             head --lines {params.n} {input.bed:q} > {output.bed}
         fi

@@ -1,8 +1,8 @@
-# Reference bedfile for alu annotations
+alu_families_fasta: /projects/BRANGWYNNE/users/yichec/resources/genomics/alu/dfam_alu.fa
+rmsk: /projects/BRANGWYNNE/tools/genomics/rmsk/hg38.repeatmasker.bed
+
 # If truncation is set to 0, will use the full bedfile.
-alu_annotation: 
-  path: /projects/BRANGWYNNE/tools/genomics/rmsk/hg38.alu.repeats.sorted.bed
-  truncation: 0
+alu_annotation_truncation: 1000
 
 bam_dir: /projects/BRANGWYNNE/projects/genomics/primary_data/2023/06_June/Nova-YCC-CutNRun/data/05_mapped_hg38_nomapq
 bam_filename_pattern: "/2685__{sample}_S1_L001.aligned.hg38.nomapq.sorted.bam"
