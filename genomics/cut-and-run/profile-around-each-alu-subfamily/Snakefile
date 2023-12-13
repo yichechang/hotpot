@@ -65,17 +65,16 @@ rule alu_bedfile:
         alu="results/alu_names.txt",
         rmsk=config['rmsk'],
     output:
-        "results/hg38.alu.repeats.bed"
+        bed="results/hg38.alu.repeats.bed"
     run:
         aluList = open(input.alu,"r")
         file = open(input.rmsk,"r")
-        fOut = open(output,"w")
+        fOut = open(output.bed,"w")
 
         aluFam=[]
         for a in aluList:
             name=a.split("\n")[0].split(" ")[1]
             aluFam.append(name)
-        print(aluFam)
         aluList.close()
 
         for f in file:
