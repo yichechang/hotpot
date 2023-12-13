@@ -1,0 +1,131 @@
+configfile: workflow.source_path('./config.yaml')
+
+wildcard_constraints:
+    sample = "[\w-]+",
+    binsize = "\d+",
+
+
+def get_all_sample_something(something):
+    samples = config["samples"]
+    return [s[something] for s in samples]
+
+SAMPLE_NAMES = get_all_sample_something("name")
+
+#
+# This can be used inside an input function, to get {RoiUID}.
+#
+def get_checkpoint_aluname(wildcards):
+    checkpoints.split_alu_bedfile.get(**wildcards)
+    return glob_wildcards("results/alu_bed_split/{AluName, [\w-]+}.bed").AluName
+
+
+#
+# top-level target rules
+#
+rule all:
+    input:
+        lambda w: expand("results/heatmap/{alu_name}_{binsize}bp.png", 
+                         alu_name=get_checkpoint_aluname(w),
+                         binsize=config['bam_to_bigwig']['binsizes'])
+
+rule all_matrix:
+    input:
+        lambda w: expand("results/matrix/{alu_name}_{binsize}bp.gz", 
+                         alu_name=get_checkpoint_aluname(w),
+                         binsize=config['bam_to_bigwig']['binsizes'])
+
+rule all_split_alu:
+    input:
+        lambda w: expand("results/alu_bed_split/{alu_name}.bed",
+                         alu_name=get_checkpoint_aluname(w))
+
+
+#
+# actual workhorse rules
+#
+rule truncate_alu_bedfile:
+    input:
+        bed=config['alu_annotation']['path']
+    output:
+        bed="results/alu.bed"
+    params:
+        n=config['alu_annotation']['truncation']
+    shell:
+        """
+        if [ {params.n} == 0 ]; then
+            cp {input.bed:q} > {output.bed}
+        else
+            head --lines {params.n} {input.bed:q} > {output.bed}
+        fi
+        """
+
+checkpoint split_alu_bedfile:
+    input:
+        bed="results/alu.bed"
+    output:
+        outdir=directory("results/alu_bed_split"),
+        marker=touch("results/alu_bed_split/.done")
+    shell:
+        """
+        awk '{{file = "{output.outdir}/"$4".bed"; print >> file; close(file)}}' {input:q}
+        """
+
+def get_mapped_filenames(wildcards):
+    return config['bam_dir'] + config['bam_filename_pattern']
+
+rule bam_to_bigwig:
+    input:
+        bam=get_mapped_filenames
+    output:
+        bw="results/bigwig/{sample}_{binsize}bp.bw"
+    conda: 
+        "deeptools"
+    shell:
+        """
+        bamCoverage -b {input.bam:q} -o {output.bw:q} \
+            --binSize {wildcards.binsize} \
+            --extendReads
+        """
+
+rule compute_matrix:
+    input:
+        bigwig=expand("results/bigwig/{sample}_{binsize}bp.bw", 
+                      sample=SAMPLE_NAMES, allow_missing=True),
+        region="results/alu_bed_split/{alu_name}.bed",
+    output:
+        "results/matrix/{alu_name}_{binsize}bp.gz"
+    params:
+        before=config["compute_matrix"]["params"]["before"],
+        after=config["compute_matrix"]["params"]["after"],
+    threads:
+        config["compute_matrix"]["cores"]
+    conda: 
+        "deeptools"
+    shell:
+        """
+        computeMatrix reference-point \
+        -S {input.bigwig} \
+        -R {input.region} \
+        -b {params.before} -a {params.after} \
+        --skipZeros \
+        -o {output} \
+        -p {threads}
+        """
+
+
+rule plot_heatmap:
+    input:
+        "results/matrix/{alu_name}_{binsize}bp.gz",
+    output:
+        "results/heatmap/{alu_name}_{binsize}bp.png"
+    conda: "deeptools"
+    shell:
+        """
+        plotHeatmap \
+        -m {input} \
+        -out {output} \
+        --colorMap viridis \
+        --missingDataColor "#FFF6EB" \
+        --plotTitle {wildcards.alu_name} \
+        --heatmapHeight 15
+        """
