@@ -1,0 +1,43 @@
+from pathlib import Path
+
+configfile: workflow.source_path('./config.yaml')
+
+wildcard_constraints:
+    sample = "[\w-]+",
+
+def get_all_sample_something(something):
+    samples = config["samples"]
+    return [s[something] for s in samples]
+
+SAMPLE_NAMES = get_all_sample_something("name")
+
+
+rule all:
+    input:
+        expand("results/fragment_lengths/{sample}.csv",
+               sample=SAMPLE_NAMES)
+
+def get_bam_filenames(wildcards):
+    return Path(config['bam_dir']) / config['bam_filename_pattern']
+
+rule sort_bam_by_name:
+    input: 
+        get_bam_filenames
+    output:
+        "results/bam_sorted_by_name/{sample}.bam"
+    conda:
+        "samtools"
+    shell:
+        """
+        samtools sort -n -o {output} {input:q}
+        """
+
+rule count_fragment_lengths:
+    input:
+        "results/bam_sorted_by_name/{sample}.bam"
+    output:
+        "results/fragment_lengths/{sample}.csv"
+    conda:
+        "pysam_ipy"
+    script:
+        "scripts/count_fragment_lengths.py"
