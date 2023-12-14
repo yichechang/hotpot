@@ -69,10 +69,67 @@ rule makewindows:
         bedtools makewindows -g {input.genome:q} -w {wildcards.binsize} > {output.binned}
         """
 
+# Make sure Alu names appear in column 2
+# Produces a text file like:
+# """
+# >DF0000002.4 AluY
+# >DF0000003.4 AluSc
+# >DF0000007.4 AluJb
+# """
+rule list_alu_names:
+    input:
+        config['alu_families_fasta'],
+    output:
+        "results/alu_names.txt"
+    shell:
+        """
+        awk '/^>/{{print}}' {input:q} > {output}
+        """
+
+rule alu_bedfile:
+    input:
+        alu="results/alu_names.txt",
+        rmsk=config['rmsk'],
+    output:
+        bed="results/hg38.alu.repeats.bed"
+    run:
+        aluList = open(input.alu,"r")
+        file = open(input.rmsk,"r")
+        fOut = open(output.bed,"w")
+
+        aluFam=[]
+        for a in aluList:
+            name=a.split("\n")[0].split(" ")[1]
+            aluFam.append(name)
+        aluList.close()
+
+        for f in file:
+            x = f.split("\t")[3]
+            if x in aluFam:
+                fOut.write(f)
+        fOut.close()
+
+
+rule truncate_alu_bedfile:
+    input:
+        bed="results/hg38.alu.repeats.bed"
+    output:
+        bed="results/alu.bed"
+    params:
+        n=config['alu_annotation_truncation']
+    shell:
+        """
+        if [ {params.n} == 0 ]; then
+            cp {input.bed} {output.bed}
+        else
+            head --lines {params.n} {input.bed:q} > {output.bed}
+        fi
+        """
+
 rule count_alu_per_window:
     input:
         genome="resources/ref/binned_genome/{binsize}bp.bed",
-        alu=config['alu_annotation']
+        alu="results/alu.bed"
     output:
         "results/binned_alu/{binsize}bp.bed"
     conda:
