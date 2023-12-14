@@ -12,7 +12,7 @@ def get_all_sample_something(something):
 SAMPLE_NAMES = get_all_sample_something("name")
 
 #
-# This can be used inside an input function, to get {RoiUID}.
+# This can be used inside an input function, to get {AluName}.
 #
 def get_checkpoint_aluname(wildcards):
     checkpoints.split_alu_bedfile.get(**wildcards)
@@ -50,6 +50,14 @@ rule all_matrix:
 #
 # actual workhorse rules
 #
+
+# Make sure Alu names appear in column 2
+# Produces a text file like:
+# """
+# >DF0000002.4 AluY
+# >DF0000003.4 AluSc
+# >DF0000007.4 AluJb
+# """
 rule list_alu_names:
     input:
         config['alu_families_fasta'],
