@@ -1,0 +1,22 @@
+# Reference bedfile for alu annotations
+# If truncation is set to 0, will use the full bedfile.
+alu_annotation: /projects/BRANGWYNNE/tools/genomics/rmsk/hg38.alu.repeats.sorted.bed
+
+bam_dir: /projects/BRANGWYNNE/projects/genomics/primary_data/2023/06_June/Nova-YCC-CutNRun/data/05_mapped_hg38_nomapq/
+bam_filename_pattern: "2685__{sample}_S1_L001.aligned.hg38.nomapq.sorted.bam"
+
+samples:
+  - name: "y460-4"
+    desc: "sgAlu"
+  - name: "y460-5"
+    desc: "sgNT"
+
+genome:
+  hg38: /projects/BRANGWYNNE/tools/genomics/genomes/STAR/hg38/GRCh38.p13_STAR/chrNameLength.txt
+
+binsizes:
+  - 1000000
+  - 100000
+  - 10000
+
+normalize: CPM

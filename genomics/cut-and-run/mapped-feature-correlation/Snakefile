@@ -1,0 +1,96 @@
+configfile: workflow.source_path('./config.yaml')
+
+wildcard_constraints:
+    sample = "[\w-]+",
+    binsize = "\d+",
+
+
+def get_all_sample_something(something):
+    samples = config["samples"]
+    return [s[something] for s in samples]
+
+SAMPLE_NAMES = get_all_sample_something("name")
+
+
+#
+# top-level target rules
+#
+rule all:
+    input:
+        lambda w: expand("results/combined/{sample}_{binsize}bp.bed", 
+                         sample=SAMPLE_NAMES, binsize=config['binsizes'])
+
+
+#
+# actual workhorse rules
+#
+
+def get_mapped_filenames(wildcards):
+    return config['bam_dir'] + config['bam_filename_pattern']
+
+rule bam_to_bigwig:
+    input:
+        bam=get_mapped_filenames
+    output:
+        bw="results/bigwig/{sample}_{binsize}bp.bw"
+    params:
+        normalize=config["normalize"]
+    conda: 
+        "deeptools"
+    shell:
+        """
+        bamCoverage -b {input.bam:q} -o {output.bw:q} \
+            --binSize {wildcards.binsize} \
+            --extendReads \
+            --normalizeUsing {params.normalize}
+        """
+
+rule bigwig_to_bedgraph:
+    input:
+        "results/bigwig/{sample}_{binsize}bp.bw"
+    output:
+        "results/bedgraph/{sample}_{binsize}bp.bedgraph"
+    conda:
+        "bedtools"
+    shell:
+        """
+        bigWigToBedGraph {input} {output}
+        """
+
+rule makewindows:
+    input:
+        genome=config["genome"]["hg38"]
+    output:
+        binned="resources/ref/binned_genome/{binsize}bp.bed"
+    conda:
+        "bedtools"
+    shell:
+        """
+        bedtools makewindows -g {input.genome:q} -w {wildcards.binsize} > {output.binned}
+        """
+
+rule count_alu_per_window:
+    input:
+        genome="resources/ref/binned_genome/{binsize}bp.bed",
+        alu=config['alu_annotation']
+    output:
+        "results/binned_alu/{binsize}bp.bed"
+    conda:
+        "bedtools"
+    shell:
+        """
+        bedtools intersect -a {input.genome} -b {input.alu:q} -c > {output}
+        """
+
+rule combine_data:
+    input:
+        mapped="results/bedgraph/{sample}_{binsize}bp.bedgraph",
+        annotation="results/binned_alu/{binsize}bp.bed",
+    output:
+        "results/combined/{sample}_{binsize}bp.bed"
+    conda:
+        "bedtools"
+    shell:
+        """
+        bedtools map -a {input.annotation} -b {input.mapped} -c 4 -o sum > {output}
+        """
