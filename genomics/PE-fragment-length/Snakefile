@@ -57,4 +57,4 @@ rule plot_fragment_lengths:
     conda:
         "quickquant"
     script:
-        "scripts/plot_fragment_lengths.py"
+        "scripts/plot_distribution.py"
