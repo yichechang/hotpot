@@ -6,3 +6,10 @@ samples:
     desc: "sgAlu"
   - name: "y460-5"
     desc: "sgNT"
+
+boundaries:
+  - 40
+  - 120
+  - 270
+  - 440
+  - 620
