@@ -47,7 +47,7 @@ def read_lengths(path, sample):
 
 def report_stats(df, out):
     (
-        df.groupby("condition")["fragment_length"]
+        df.groupby("sample")["fragment_length"]
         .aggregate(
             min='min', 
             max='max',
