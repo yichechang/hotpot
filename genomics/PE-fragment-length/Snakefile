@@ -14,8 +14,10 @@ SAMPLE_NAMES = get_all_sample_something("name")
 
 rule all:
     input:
-        expand("results/fragment_lengths/{sample}.csv",
-               sample=SAMPLE_NAMES)
+        [
+            "results/fragment_lengths/fragment_length_distri.pdf",
+            "results/fragment_lengths/fragment_length_stats.csv",
+        ]
 
 def get_bam_filenames(wildcards):
     return Path(config['bam_dir']) / config['bam_filename_pattern']
@@ -41,3 +43,18 @@ rule count_fragment_lengths:
         "pysam_ipy"
     script:
         "scripts/count_fragment_lengths.py"
+
+rule plot_fragment_lengths:
+    input:
+        csvs=expand("results/fragment_lengths/{sample}.csv",
+                    sample=SAMPLE_NAMES),
+    output:
+        fig="results/fragment_lengths/fragment_length_distri.pdf",
+        stats="results/fragment_lengths/fragment_length_stats.csv",
+    params:
+        samples=get_all_sample_something("desc"),
+        thresholds=config['boundaries']
+    conda:
+        "quickquant"
+    script:
+        "scripts/plot_fragment_lengths.py"
