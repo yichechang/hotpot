@@ -32,6 +32,7 @@ mpl.rcParams['figure.constrained_layout.use'] = True
 mpl.rcParams['savefig.dpi'] = 300
 mpl.rcParams['savefig.bbox'] = 'tight'
 
+
 def main():
     dfs = [read_lengths(p, s) for p, s in zip(INPUT.csvs, PARAMS.samples)]
     df = pd.concat(dfs, ignore_index=True)
@@ -39,7 +40,7 @@ def main():
     report_stats(df, OUTPUT.stats)
 
     plot_distribution(df, OUTPUT.fig)
-    
+
 def read_lengths(path, sample):
     df = pd.read_csv(path)
     df["sample"] = sample
@@ -61,7 +62,7 @@ def plot_distribution(df, out):
     hist_kwargs = HIST_KWARGS
     tick = PARAMS.tick
     gatings = PARAMS.gatings
-
+    
     f = plt.figure()
 
     p = (
