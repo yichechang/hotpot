@@ -32,14 +32,15 @@ mpl.rcParams['figure.constrained_layout.use'] = True
 mpl.rcParams['savefig.dpi'] = 300
 mpl.rcParams['savefig.bbox'] = 'tight'
 
-def main(paths, samples, out_stats, out_fig, thresholds):
-    dfs = [read_lengths(p, s) for p, s in zip(paths, samples)]
+
+def main():
+    dfs = [read_lengths(p, s) for p, s in zip(INPUT.csvs, PARAMS.samples)]
     df = pd.concat(dfs, ignore_index=True)
 
-    report_stats(df, out_stats)
+    report_stats(df, OUTPUT.stats)
 
-    plot_distribution(df, out_fig, thresholds)
-    
+    plot_distribution(df, OUTPUT.fig)
+
 def read_lengths(path, sample):
     df = pd.read_csv(path)
     df["sample"] = sample
@@ -57,7 +58,11 @@ def report_stats(df, out):
         )
     ).to_csv(out)
 
-def plot_distribution(df, out, thresholds):
+def plot_distribution(df, out):
+    hist_kwargs = HIST_KWARGS
+    tick = PARAMS.tick
+    gatings = PARAMS.gatings
+    
     f = plt.figure()
 
     p = (
@@ -65,31 +70,35 @@ def plot_distribution(df, out, thresholds):
         .facet(row="sample")
         .add(
             so.Bars(alpha=0.4), 
-            so.Hist(stat="proportion", binwidth=10, binrange=(0, 1150)),
+            so.Hist(**hist_kwargs),
             x="fragment_length", color="sample",
         )
         .scale(
-            x=so.Continuous().tick(every=250)
+            x=so.Continuous().tick(every=tick)
         )
         .theme(mpl.rcParams)
         .layout(engine='constrained')
-        .label(x='Fragment length (bp)', y='Proportion')
+        .label(x='Fragment length (bp)', y=hist_kwargs['stat'].capitalize())
     )
     p.on(f).plot()
 
     for ax in f.axes:
         ymin, ymax = ax.get_ylim()
-        ax.vlines(x=thresholds, ymin=ymin, ymax=ymax, colors='grey', alpha=0.4)
-        for th in thresholds:
+        ax.vlines(x=gatings, ymin=ymin, ymax=ymax, colors='grey', alpha=0.4)
+        for th in gatings:
             ax.annotate(text=th, xy=(th+5, ymax*0.9), color='grey')
 
     f.savefig(out)
 
 if __name__ == '__main__':
-    main(
-        snakemake.input.csvs,
-        snakemake.params.samples,
-        snakemake.output.stats,
-        snakemake.output.fig,
-        snakemake.params.thresholds
-    )
+    INPUT = snakemake.input
+    OUTPUT = snakemake.output
+    PARAMS = snakemake.params
+    
+    HIST_KWARGS = {
+        "binwidth": PARAMS.binwidth,
+        "binrange": PARAMS.binrange,
+        "stat": PARAMS.stat,
+    }
+
+    main()
