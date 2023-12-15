@@ -15,8 +15,8 @@ SAMPLE_NAMES = get_all_sample_something("name")
 rule all:
     input:
         [
-            "results/fragment_lengths/fragment_length_distri.pdf",
-            "results/fragment_lengths/fragment_length_stats.csv",
+            "results/output/fragment_length_distri.pdf",
+            "results/output/fragment_length_stats.csv",
         ]
 
 def get_bam_filenames(wildcards):
@@ -49,8 +49,8 @@ rule plot_fragment_lengths:
         csvs=expand("results/fragment_lengths/{sample}.csv",
                     sample=SAMPLE_NAMES),
     output:
-        fig="results/fragment_lengths/fragment_length_distri.pdf",
-        stats="results/fragment_lengths/fragment_length_stats.csv",
+        fig="results/output/fragment_length_distri.pdf",
+        stats="results/output/fragment_length_stats.csv",
     params:
         samples=get_all_sample_something("desc"),
         binwidth=config['binwidth'],
