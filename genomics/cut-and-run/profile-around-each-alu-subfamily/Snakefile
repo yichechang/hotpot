@@ -128,7 +128,7 @@ rule bam_to_bigwig:
     output:
         bw="results/bigwig/{sample}_{binsize}bp.bw"
     conda: 
-        "deeptools"
+        "envs/deeptools.yaml"
     shell:
         """
         bamCoverage -b {input.bam:q} -o {output.bw:q} \
@@ -149,7 +149,7 @@ rule compute_matrix:
     threads:
         config["compute_matrix"]["cores"]
     conda: 
-        "deeptools"
+        "envs/deeptools.yaml"
     shell:
         """
         computeMatrix reference-point \
@@ -167,7 +167,8 @@ rule plot_heatmap:
         "results/matrix/{alu_name}_{binsize}bp.gz",
     output:
         "results/heatmap/{alu_name}_{binsize}bp.png"
-    conda: "deeptools"
+    conda: 
+        "envs/deeptools.yaml"
     shell:
         """
         plotHeatmap \
