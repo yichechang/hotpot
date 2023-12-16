@@ -36,7 +36,7 @@ rule bam_to_bigwig:
     params:
         normalize=config["normalize"]
     conda: 
-        "deeptools"
+        "envs/deeptools.yaml"
     shell:
         """
         bamCoverage -b {input.bam:q} -o {output.bw:q} \
@@ -51,7 +51,7 @@ rule bigwig_to_bedgraph:
     output:
         "results/bedgraph/{sample}_{binsize}bp.bedgraph"
     conda:
-        "bedtools"
+        "envs/bedtools.yaml"
     shell:
         """
         bigWigToBedGraph {input} {output}
@@ -63,7 +63,7 @@ rule makewindows:
     output:
         binned="resources/ref/binned_genome/{binsize}bp.bed"
     conda:
-        "bedtools"
+        "envs/bedtools.yaml"
     shell:
         """
         bedtools makewindows -g {input.genome:q} -w {wildcards.binsize} > {output.binned}
@@ -133,7 +133,7 @@ rule count_alu_per_window:
     output:
         "results/binned_alu/{binsize}bp.bed"
     conda:
-        "bedtools"
+        "envs/bedtools.yaml"
     shell:
         """
         bedtools intersect -a {input.genome} -b {input.alu:q} -c > {output}
@@ -146,7 +146,7 @@ rule combine_data:
     output:
         "results/combined/{sample}_{binsize}bp.bed"
     conda:
-        "bedtools"
+        "envs/bedtools.yaml"
     shell:
         """
         bedtools map -a {input.annotation} -b {input.mapped} -c 4 -o sum > {output}
