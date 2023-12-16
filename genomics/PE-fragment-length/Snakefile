@@ -28,7 +28,7 @@ rule sort_bam_by_name:
     output:
         "results/bam_sorted_by_name/{sample}.bam"
     conda:
-        "samtools"
+        "envs/samtools.yaml"
     shell:
         """
         samtools sort -n -o {output} {input:q}
@@ -40,7 +40,7 @@ rule count_fragment_lengths:
     output:
         "results/fragment_lengths/{sample}.csv"
     conda:
-        "pysam_ipy"
+        "envs/pysam_pandas.yaml"
     script:
         "scripts/count_fragment_lengths.py"
 
@@ -59,6 +59,6 @@ rule plot_fragment_lengths:
         tick=config['tick'],
         gatings=config['gatings'],
     conda:
-        "quickquant"
+         "envs/plot.yaml"
     script:
         "scripts/plot_distribution.py"
