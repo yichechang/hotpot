@@ -20,6 +20,17 @@ rule all:
         lambda w: expand("results/combined/{sample}_{binsize}bp.bed", 
                          sample=SAMPLE_NAMES, binsize=config['binsizes'])
 
+rule all_envs:
+    """
+    Run this rule with internect access. This is a workaround for creating
+    conda environments associated with rules that are not discoverable 
+    until runtime (e.g., rules downstream to checkpoint rules).
+    """
+    conda:
+        "envs/{env}.yaml"
+    output:
+        touch(".envs/{env}.created")
+
 
 #
 # actual workhorse rules

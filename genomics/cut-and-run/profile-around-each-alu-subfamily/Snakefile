@@ -45,6 +45,16 @@ rule all_matrix:
                          alu_name=get_checkpoint_aluname(w),
                          binsize=config['bam_to_bigwig']['binsizes'])
 
+rule all_envs:
+    """
+    Run this rule with internect access. This is a workaround for creating
+    conda environments associated with rules that are not discoverable 
+    until runtime (e.g., rules downstream to checkpoint rules).
+    """
+    conda:
+        "envs/{env}.yaml"
+    output:
+        touch(".envs/{env}.created")
 
 
 #
