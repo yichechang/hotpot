@@ -20,4 +20,4 @@ for details.
 
    We don't use `--conda-create-envs-only` because we want to install 
    all dependencies ahead of time, independent of if certain rules 
-   having become discoverable (e.g., if they are after a checkpoint).
+   have become discoverable (e.g., if they are after a checkpoint).
