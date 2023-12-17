@@ -1,0 +1,4 @@
+channels:
+  - conda-forge
+dependencies:
+  - bioconda::deeptools == 3.5.4

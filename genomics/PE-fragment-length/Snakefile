@@ -19,6 +19,26 @@ rule all:
             "results/output/fragment_length_stats.csv",
         ]
 
+rule all_envs:
+    """
+    Run this rule with internect access. This is a workaround for creating
+    conda environments associated with rules that are not discoverable 
+    until runtime (e.g., rules downstream to checkpoint rules).
+    """
+    input:
+        expand(".envs/{env}.created",
+               env=glob_wildcards("envs/{env, [\w-]+}.yaml").env)
+
+rule make_env:
+    conda:
+        "envs/{env}.yaml"
+    output:
+        touch(".envs/{env}.created")
+    shell:
+        """
+        sleep .5
+        """
+
 def get_bam_filenames(wildcards):
     return Path(config['bam_dir']) / config['bam_filename_pattern']
 
@@ -28,7 +48,7 @@ rule sort_bam_by_name:
     output:
         "results/bam_sorted_by_name/{sample}.bam"
     conda:
-        "samtools"
+        "envs/samtools.yaml"
     shell:
         """
         samtools sort -n -o {output} {input:q}
@@ -40,7 +60,7 @@ rule count_fragment_lengths:
     output:
         "results/fragment_lengths/{sample}.csv"
     conda:
-        "pysam_ipy"
+        "envs/pysam_pandas.yaml"
     script:
         "scripts/count_fragment_lengths.py"
 
@@ -59,6 +79,6 @@ rule plot_fragment_lengths:
         tick=config['tick'],
         gatings=config['gatings'],
     conda:
-        "quickquant"
+         "envs/plot.yaml"
     script:
         "scripts/plot_distribution.py"

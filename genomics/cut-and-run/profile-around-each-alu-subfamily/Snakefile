@@ -45,7 +45,25 @@ rule all_matrix:
                          alu_name=get_checkpoint_aluname(w),
                          binsize=config['bam_to_bigwig']['binsizes'])
 
+rule all_envs:
+    """
+    Run this rule with internect access. This is a workaround for creating
+    conda environments associated with rules that are not discoverable 
+    until runtime (e.g., rules downstream to checkpoint rules).
+    """
+    input:
+        expand(".envs/{env}.created",
+               env=glob_wildcards("envs/{env, [\w-]+}.yaml").env)
 
+rule make_env:
+    conda:
+        "envs/{env}.yaml"
+    output:
+        touch(".envs/{env}.created")
+    shell:
+        """
+        sleep .5
+        """
 
 #
 # actual workhorse rules
@@ -128,7 +146,7 @@ rule bam_to_bigwig:
     output:
         bw="results/bigwig/{sample}_{binsize}bp.bw"
     conda: 
-        "deeptools"
+        "envs/deeptools.yaml"
     shell:
         """
         bamCoverage -b {input.bam:q} -o {output.bw:q} \
@@ -149,7 +167,7 @@ rule compute_matrix:
     threads:
         config["compute_matrix"]["cores"]
     conda: 
-        "deeptools"
+        "envs/deeptools.yaml"
     shell:
         """
         computeMatrix reference-point \
@@ -167,7 +185,8 @@ rule plot_heatmap:
         "results/matrix/{alu_name}_{binsize}bp.gz",
     output:
         "results/heatmap/{alu_name}_{binsize}bp.png"
-    conda: "deeptools"
+    conda: 
+        "envs/deeptools.yaml"
     shell:
         """
         plotHeatmap \
