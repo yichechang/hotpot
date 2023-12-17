@@ -60,7 +60,10 @@ rule make_env:
         "envs/{env}.yaml"
     output:
         touch(".envs/{env}.created")
-
+    shell:
+        """
+        sleep .5
+        """
 
 #
 # actual workhorse rules
