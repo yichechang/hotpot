@@ -26,10 +26,19 @@ rule all_envs:
     conda environments associated with rules that are not discoverable 
     until runtime (e.g., rules downstream to checkpoint rules).
     """
+    input:
+        expand(".envs/{env}.created",
+               env=glob_wildcards("envs/{env, [\w-]+}.yaml").env)
+
+rule make_env:
     conda:
         "envs/{env}.yaml"
     output:
         touch(".envs/{env}.created")
+    shell:
+        """
+        sleep .5
+        """
 
 
 #
