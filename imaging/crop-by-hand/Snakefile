@@ -1,0 +1,63 @@
+rule find_images:
+    input:
+        lambda wildcards: config['input']['pattern']
+    output:
+        'results/imagesetlist.csv',
+    script:
+        "../scripts/glob_imagesets.py"
+
+
+rule parse_metadata:
+    input:
+        get_imageset_files
+    output: 
+        'results/imagesetlist.csv',
+    run:
+        from abcdcs import curate
+        import csv
+        parsed = curate.parse_filepaths(
+            fpaths=input, 
+            pat=config['input']['image_path']['regex'], 
+            datefmt=config['input']['datefmt'],
+            nafilter=config['parse_metadata']['nafilter'],
+            verbose=config['parse_metadata']['verbose'],
+        )
+        samplesheet = curate.read_samplesheet(config['input']['samplesheet_path'])
+        merged = curate.merge_sample_metadata(
+            parsed, samplesheet, patch=config['parse_metadata']['patch'])
+        merged.to_csv(output[0], quoting=csv.QUOTE_NONNUMERIC, index=False)
+
+rule draw_roi:
+    input: 
+        'results/imagesetlist.csv',
+    output:
+        'results/roilist.csv'
+    params:
+
+    script:
+        "../scripts/draw.py"
+
+# Note:
+#   Defining output by touching a file inside the desired output folder
+#   (specified same as params.outdir) ensures that folder gets created.
+#   This means that the script doesn't need to check/create by itself.
+#   We also don't need to explicitly do mkdir before calling the script.
+#   See [why this is intended](https://github.com/snakemake/snakemake/issues/774#issuecomment-1036152852)
+checkpoint crop_roi:
+    input:
+        'results/roilist.csv'
+    output:
+        touch("results/image/multi_ch/.created")
+    params:
+        outdir = "results/image/multi_ch"
+    script:
+        "../scripts/crop_roi.py"
+
+all_draw_roi_input = 'results/roilist.csv'
+
+all_roi_input = [
+    lambda w: expand("results/image/multi_ch/{RoiUID}.ome.tif", 
+                     RoiUID=get_checkpoint_RoiUID(w)),
+    lambda w: expand("results/image_registered/single_ch/{ch}/{RoiUID}.ome.tif", 
+                     ch=ALL_CH, RoiUID=get_checkpoint_RoiUID(w)),
+]
