@@ -1,4 +1,4 @@
-from typing import Dict, List, Optional
+from typing import Dict, List
 from pathlib import Path
 import shutil
 
@@ -7,9 +7,6 @@ from magicgui import magicgui
 from magicgui.widgets import Container
 from aicsimageio import AICSImage
 import pandas as pd
-
-from abcdcs import curate
-import typer
 
 
 # TODO:
@@ -21,8 +18,7 @@ def roi_drawer(imageset_records: List, output_dir: Path, chinfo_dict: Dict = Non
     ----------
     imageset_records: list of dict
         List of imageset records. Each record needs to contain minimally
-        `ImagesetFilepath` (absolute path point to an nd2 file) and 
-        `ImagesetUID` (UID associated with that nd2 file).
+        `ImagesetFilepath` (absolute path point to an image file).
     output_dir: pathlib.Path
         Path to the directry where compiled results (csv) to be saved.
     chinfo_dict: Dict
@@ -81,7 +77,6 @@ def roi_drawer(imageset_records: List, output_dir: Path, chinfo_dict: Dict = Non
     # ====================
     @magicgui(call_button='next')
     def next_callback(viewer: napari.Viewer):
-        # nonlocal current_path
         save_current_rois(viewer)
         if current_path + 1 < len(imageset_records):
             set_up_new_file(viewer, 'next')
@@ -89,14 +84,14 @@ def roi_drawer(imageset_records: List, output_dir: Path, chinfo_dict: Dict = Non
 
     @magicgui(call_button='prev')
     def prev_callback(viewer: napari.Viewer):
-        # nonlocal current_path
         save_current_rois(viewer)
         if current_path - 1 >= 0:
             set_up_new_file(viewer, 'prev')
 
 
     def save_current_rois(viewer):
-        outname = curate.MetadataConverter('imageset').gather(imageset_records[current_path]) + '.csv'
+        image_path = imageset_records[current_path]['ImagesetFilepath']
+        outname = Path(image_path).stem + '.csv'
         outpath = output_dir / outname
 
         # Not sure how to access the dataframe describing ROI features.
@@ -105,6 +100,11 @@ def roi_drawer(imageset_records: List, output_dir: Path, chinfo_dict: Dict = Non
         # => Since these are intermediate files, just set 'index' to be
         #    RoiID when combining the csv files. (See `compile_callback`)
         viewer.layers['ROIs'].save(str(outpath))
+
+        # include original image filepath
+        df = pd.read_csv(outpath)
+        df['ImagesetFilepath'] = image_path
+        df.to_csv(outpath)
 
 
     def set_up_new_file(viewer, direction):
@@ -141,7 +141,6 @@ def roi_drawer(imageset_records: List, output_dir: Path, chinfo_dict: Dict = Non
 def compile_roilist(
         tmp_dir: str, 
         output_path: str, 
-        imagelist_path: str
     ) -> None:
     """
     Compile a single roilist from all tmp roilist csv files.
@@ -151,24 +150,23 @@ def compile_roilist(
     #
     files = list(Path(tmp_dir).glob('*.csv'))
     dfs_coords = [pd.read_csv(file) for file in files]
-    # Add ImagesetUID in ROI information
-    for df,file in zip(dfs_coords,files):
-        df['ImagesetUID'] = file.stem
+    # Add ImagesetFilepath in ROI information
+    # for df,file in zip(dfs_coords,files):
+    #     # remove trailing .csv, resulting in abs path for the original image
+    #     df['ImagesetFilepath'] = str(file.with_suffix(''))
     df_coords = pd.concat(dfs_coords)
     # Add ID and UID for each ROI coordinates. The Numeric ID already 
     # exists as column named 'index' (note: not as the index of the 
     # dataframe).
     df_coords = df_coords.rename(columns={'index': 'RoiID'})
     df_coords['RoiID'] = df_coords['RoiID'].astype(str)
-    df_coords['RoiUID'] = df_coords['ImagesetUID'] + '_' + df_coords['RoiID']
-    
 
     #
     # Process ROI coordinates to ROI
     #
-    colnames_roiUID = ['RoiUID', 'ImagesetUID', 'RoiID']
+    colnames_roiID = ['ImagesetFilepath', 'RoiID']
     df_rois = pd.pivot(df_coords,
-                       index=colnames_roiUID,
+                       index=colnames_roiID,
                        columns=['vertex-index'],
                        values=['axis-0', 'axis-1'],
                       )
@@ -182,13 +180,8 @@ def compile_roilist(
     df_rois['cf'] = df_rois[['c1', 'c2']].max(axis=1)
 
     df_rois = df_rois.reset_index()
-    df_rois = df_rois[colnames_roiUID + ['ri', 'rf', 'ci', 'cf']].droplevel('vertex-index', axis=1)
+    df_rois = df_rois[colnames_roiID + ['ri', 'rf', 'ci', 'cf']].droplevel('vertex-index', axis=1)
 
-    #
-    # Merge Imageset metadata to Roi
-    #
-    imagelist = pd.read_csv(imagelist_path, dtype=str)
-    df_rois = df_rois.merge(imagelist, on=['ImagesetUID'])
 
     #
     # save output to file
@@ -208,7 +201,7 @@ def extract_channel_info(channel_info_list) -> Dict:
         for key in keys
     }
 
-def main(imagesetlist_path: str, output_path: str, chinfo_dict=None
+def main(imageset_paths: List[str], output_path: str, chinfo_dict=None
     ) -> None:
     # Don't type hint `chinfo_dict` (which should be Dict) because 
     # typer doesn't support such type. This also means currently we
@@ -221,7 +214,10 @@ def main(imagesetlist_path: str, output_path: str, chinfo_dict=None
     directory will be created in the same dir which <output_path> is in,
     to store individual csv files for each Imageset. 
     """    
-    imageset_records = pd.read_csv(imagesetlist_path, dtype=str).to_dict('records')
+    imageset_records = (
+        pd.DataFrame({'ImagesetFilepath': imageset_paths})
+        .to_dict('records')
+    )
     
     output_pathobj = Path(output_path)
     output_pathobj.parent.mkdir(parents=True, exist_ok=True)
@@ -234,7 +230,7 @@ def main(imagesetlist_path: str, output_path: str, chinfo_dict=None
     tmp_dir.mkdir(exist_ok=True, parents=True)
     roi_drawer(imageset_records, tmp_dir, chinfo_dict)
     
-    compile_roilist(tmp_dir, output_path, imagesetlist_path)
+    compile_roilist(tmp_dir, output_path)
 
 
 if __name__ == '__main__':
@@ -242,8 +238,6 @@ if __name__ == '__main__':
         chinfo_dict = extract_channel_info(
             snakemake.config['input']['channels'])
         
-        main(snakemake.input[0], 
-             snakemake.output[0], 
+        main(snakemake.input.images[:], 
+             snakemake.output.csv, 
              chinfo_dict=chinfo_dict)
-    else:
-        typer.run(main)

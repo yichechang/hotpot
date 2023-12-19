@@ -6,20 +6,25 @@
 # characters are used. More importantly, even if they are quoted here,
 # they still need to be quoted again when used in the "shell" derivative.
 input:
-  samplesheet_path: resources/example_data/samplesheet.csv
   image_path:
-    dir: resources/example_data
-    glob: '*002_Deno.nd2'
-    regex: 'Well(?P<WellID>[A-H]\d{2})_\w+_fov(?P<FovID>\d{3})_snap-nodelay-snap002_Deno.nd2'
-  datefmt: # leave blank if not used
-  # channels has to be in the order as how they present in the raw file
+    # [Required]
+    dir: data
+    # [Required] TODO: Not sure if quoted is necessary
+    glob: '*_Fov*.nd2'
+    # [Optional] TODO: Not sure if quoted is necessary
+    # e.g., 'Well(?P<WellID>[A-H]\d{2})_\w+_fov(?P<FovID>\d{3}).nd2'
+    regex:
   channels: 
-    - oc: "640"
+    - oc: "640 nm"
       fluoro: miRFP670
       colormap: magenta
       background: 100 
-    - oc: "488"
+    - oc: "488 nm"
       fluoro: sfGFP
       colormap: green
+      background: 100
+    - oc: "405 nm"
+      fluoro: BFP
+      colormap: blue
       background: 100
   bitdepth: 16
