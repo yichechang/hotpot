@@ -150,14 +150,9 @@ def compile_roilist(
     #
     files = list(Path(tmp_dir).glob('*.csv'))
     dfs_coords = [pd.read_csv(file) for file in files]
-    # Add ImagesetFilepath in ROI information
-    # for df,file in zip(dfs_coords,files):
-    #     # remove trailing .csv, resulting in abs path for the original image
-    #     df['ImagesetFilepath'] = str(file.with_suffix(''))
     df_coords = pd.concat(dfs_coords)
-    # Add ID and UID for each ROI coordinates. The Numeric ID already 
-    # exists as column named 'index' (note: not as the index of the 
-    # dataframe).
+    # Add ID for each ROI coordinates. The Numeric ID already exists as 
+    # column named 'index' (note: not as the index of the dataframe).
     df_coords = df_coords.rename(columns={'index': 'RoiID'})
     df_coords['RoiID'] = df_coords['RoiID'].astype(str)
 
@@ -203,10 +198,6 @@ def extract_channel_info(channel_info_list) -> Dict:
 
 def main(imageset_paths: List[str], output_path: str, chinfo_dict=None
     ) -> None:
-    # Don't type hint `chinfo_dict` (which should be Dict) because 
-    # typer doesn't support such type. This also means currently we
-    # can't specify channel information when launching via commandline,
-    # and as such all channels will be in grey.
     # TODO:
     #   If refactoring roi_drawer(), pick some sensible defaults.
     """
