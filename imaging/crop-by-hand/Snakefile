@@ -37,6 +37,8 @@ rule draw_roi:
         images=get_imageset_files
     output:
         csv='results/roilist.csv'
+    conda:
+        "envs/environment.yaml"
     script:
         "scripts/draw.py"
 
@@ -48,5 +50,7 @@ rule crop_roi:
         touch("results/cropped/.created")
     params:
         outdir="results/cropped"
+    conda:
+        "envs/environment.yaml"
     script:
         "scripts/crop.py"

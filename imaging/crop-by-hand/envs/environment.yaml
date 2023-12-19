@@ -1,0 +1,16 @@
+channels:
+  - conda-forge
+dependencies:
+  - python =3.10
+  - napari
+  - pyqt
+  - magicgui
+  - pandas
+  - numpy
+  - bioformats_jar
+  - pip
+  - pip:
+    - aicsimageio
+    - aicsimageio[nd2]
+    - aicsimageio[base-imageio]
+    - ome-types >=0.3.4, <0.4.0
