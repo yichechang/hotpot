@@ -26,13 +26,11 @@ def get_imageset_files(wildcards):
     
     return files
 
-all_draw_roi_input = 'results/roilist.csv'
-
-# all_cropped_input = "results/cropped/.created"
 
 rule all:
     input:
         "results/cropped/.created"
+
 
 rule draw_roi:
     input: 
@@ -42,18 +40,13 @@ rule draw_roi:
     script:
         "scripts/draw.py"
 
-# Note:
-#   Defining output by touching a file inside the desired output folder
-#   (specified same as params.outdir) ensures that folder gets created.
-#   This means that the script doesn't need to check/create by itself.
-#   We also don't need to explicitly do mkdir before calling the script.
-#   See [why this is intended](https://github.com/snakemake/snakemake/issues/774#issuecomment-1036152852)
+
 rule crop_roi:
     input:
         'results/roilist.csv'
     output:
         touch("results/cropped/.created")
     params:
-        outdir = "results/cropped"
+        outdir="results/cropped"
     script:
         "scripts/crop.py"
