@@ -220,7 +220,6 @@ def main(imageset_paths: List[str], output_path: str, chinfo_dict=None
     )
     
     output_pathobj = Path(output_path)
-    output_pathobj.parent.mkdir(parents=True, exist_ok=True)
 
     # Create a new tmp dir for this specific drawing action. Note that
     # old 'tmp/roi_drawer/' will be removed first.
