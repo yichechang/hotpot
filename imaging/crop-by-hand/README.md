@@ -15,6 +15,10 @@ for images in a folder using napari.
        --cores <number_of_cores> \
        all
    ``` 
+   Include `--conda-prefix <conda_prefix>` if you want to specify
+   where conda environments are created. This is useful if you
+   don't want to create conda environments on each and every run
+   for different projects. 
 4. Draw ROIs using napari viewer's shape layer. By default, the
    rectangle shape tool is selected. Press button `next` once 
    you have finished drawing ROI(s) for the current image. If
@@ -27,6 +31,9 @@ for images in a folder using napari.
    - `results/cropped` directory contains the cropped images.
 
 ## Requirements
-Only `snakemake` needs to be installed. The workflow will
-automatically create a conda environment and install other
-required packages for each rule if needed.
+- `snakemake`
+- `mamba` (optional). If prefer using `conda`, include 
+  `--conda-frontend conda` in the snakemake command.
+
+The workflow will automatically create a conda environment and
+install other required packages for each rule if needed. 
