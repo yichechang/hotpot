@@ -1,0 +1,30 @@
+# ======================================================================
+# Experiment-specific configurations
+# ======================================================================
+
+# No need to quote the strings in yaml files, but do so when special 
+# characters are used. More importantly, even if they are quoted here,
+# they still need to be quoted again when used in the "shell" derivative.
+input:
+  image_path:
+    # [Required]
+    dir: data
+    # [Required] TODO: Not sure if quoted is necessary
+    glob: '*_Fov*.nd2'
+    # [Optional] TODO: Not sure if quoted is necessary
+    # e.g., 'Well(?P<WellID>[A-H]\d{2})_\w+_fov(?P<FovID>\d{3}).nd2'
+    regex:
+  channels: 
+    - oc: "640 nm"
+      fluoro: miRFP670
+      colormap: magenta
+      background: 100 
+    - oc: "488 nm"
+      fluoro: sfGFP
+      colormap: green
+      background: 100
+    - oc: "405 nm"
+      fluoro: BFP
+      colormap: blue
+      background: 100
+  bitdepth: 16

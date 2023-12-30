@@ -1,0 +1,56 @@
+configfile: workflow.source_path("./config.yaml")
+
+from pathlib import Path
+import re
+
+def get_imageset_files(wildcards):
+    """Return list of files matching glob pattern in config file."""
+
+    files = []
+    image_path = config['input']['image_path']
+    globbed = Path(image_path['dir']).rglob(image_path['glob'])
+    globbed_fpaths = [p for p in globbed if p.is_file()]
+    
+    # detailed matching via regex if specified
+    if config['input']['image_path']['regex']:
+        for p in globbed_fpaths:
+            if re.search(image_path['regex'], str(p)):
+                files.append(str(p))
+            else:
+                print(f"Excluding file globbed but cannot be parsed: "
+                    f"{str(p)}.")
+    # if not specified, just use globbed files
+    else:
+        files = globbed_fpaths
+        print(f"No regex specified, using all ({len(files)}) globbed files.")
+    
+    return files
+
+
+rule all:
+    input:
+        "results/cropped/.created"
+
+
+rule draw_roi:
+    input: 
+        images=get_imageset_files
+    output:
+        csv='results/roilist.csv'
+    conda:
+        "envs/environment.yaml"
+    script:
+        "scripts/draw.py"
+
+
+rule crop_roi:
+    input:
+        'results/roilist.csv'
+    output:
+        touch("results/cropped/.created")
+    params:
+        outdir="results/cropped"
+    conda:
+        "envs/environment.yaml"
+    script:
+        "scripts/crop.py"
