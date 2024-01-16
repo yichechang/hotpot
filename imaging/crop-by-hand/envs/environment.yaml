@@ -1,8 +1,9 @@
 channels:
   - conda-forge
 dependencies:
-  - python =3.10
+  - python
   - napari
+  - paramiko # snakemake issue #2619 on gh
   - pyqt
   - magicgui
   - pandas

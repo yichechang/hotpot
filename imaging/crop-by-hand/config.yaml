@@ -2,29 +2,49 @@
 # Experiment-specific configurations
 # ======================================================================
 
-# No need to quote the strings in yaml files, but do so when special 
-# characters are used. More importantly, even if they are quoted here,
-# they still need to be quoted again when used in the "shell" derivative.
 input:
+  # [Required]
+  # Location and pattern of image files to include
+  #
   image_path:
     # [Required]
+    # Folder containing image files
     dir: data
-    # [Required] TODO: Not sure if quoted is necessary
+
+    # [Required]
+    # Pattern of valid image files. This allows you to have other
+    # files in the same folder but only those matching the pattern
+    # will be included.
+    #
+    # TODO: Not sure if quoted is necessary
+    #
     glob: '*_Fov*.nd2'
-    # [Optional] TODO: Not sure if quoted is necessary
+
+    # [Optional]
+    # Fine-grained pattern of valid image files with regular expression
+    #
+    # TODO: Not sure if quoted is necessary
+    #
     # e.g., 'Well(?P<WellID>[A-H]\d{2})_\w+_fov(?P<FovID>\d{3}).nd2'
     regex:
-  channels: 
+
+
+  # [Optional]
+  # Channel information in the order of how they appear in the image
+  #
+  #     oc: name of that channel as it appears in the image
+  #     fluoro: what you see in display
+  #     colormap: a valid matplotlib colormap name
+  #
+  # Currently you should either leave this blank or specify all three
+  # information for *all* channels.
+  channels:
     - oc: "640 nm"
       fluoro: miRFP670
       colormap: magenta
-      background: 100 
     - oc: "488 nm"
       fluoro: sfGFP
       colormap: green
-      background: 100
     - oc: "405 nm"
       fluoro: BFP
       colormap: blue
-      background: 100
-  bitdepth: 16
