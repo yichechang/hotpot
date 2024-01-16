@@ -1,4 +1,4 @@
-from typing import Dict, List
+from typing import Dict, List, Optional, Any
 from pathlib import Path
 import shutil
 
@@ -11,7 +11,11 @@ import pandas as pd
 
 # TODO:
 #   Consider picking some defaults for chinfo_dict
-def roi_drawer(imageset_records: List, output_dir: Path, chinfo_dict: Dict = None):
+def roi_drawer(
+    imageset_records: List,
+    output_dir: Path,
+    chinfo_dict: Optional[Dict] = None
+):
     """View and draw ROIs on each image set from the filepath list.
 
     Parameters
@@ -30,7 +34,7 @@ def roi_drawer(imageset_records: List, output_dir: Path, chinfo_dict: Dict = Non
     -----
     Need to click 'next' or 'prev' to trigger saving. This is fine for
     all but the last imageset, as it is not something natural to do at
-    the end. 
+    the end.
     """
     # ====================
     # Start napari viewer using the first image set
@@ -46,9 +50,9 @@ def roi_drawer(imageset_records: List, output_dir: Path, chinfo_dict: Dict = Non
         }
 
     viewer = napari.view_image(
-        img, 
-        channel_axis=1, 
-        colormap=chinfo_dict['colormap'], 
+        img,
+        channel_axis=1,
+        colormap=chinfo_dict['colormap'],
         name=chinfo_dict['fluoro'],
     )
     # Connect these two image layers to autoscale contrast when updated
@@ -69,7 +73,7 @@ def roi_drawer(imageset_records: List, output_dir: Path, chinfo_dict: Dict = Non
     # Check and prepare output file directries
     #
     output_dir.mkdir(exist_ok=True)
-    
+
 
 
     # ====================
@@ -114,7 +118,7 @@ def roi_drawer(imageset_records: List, output_dir: Path, chinfo_dict: Dict = Non
             current_path += 1
         elif direction == 'prev':
             current_path -= 1
-        
+
         # Update layers for new images without adding/removing layers
         img = AICSImage(imageset_records[current_path]["ImagesetFilepath"]).xarray_data
         # viewer.layers['miRFP670'].data = img.isel(C=0).data
@@ -139,9 +143,9 @@ def roi_drawer(imageset_records: List, output_dir: Path, chinfo_dict: Dict = Non
 
 
 def compile_roilist(
-        tmp_dir: str, 
-        output_path: str, 
-    ) -> None:
+    tmp_dir: str,
+    output_path: str,
+) -> None:
     """
     Compile a single roilist from all tmp roilist csv files.
     """
@@ -151,7 +155,7 @@ def compile_roilist(
     files = list(Path(tmp_dir).glob('*.csv'))
     dfs_coords = [pd.read_csv(file) for file in files]
     df_coords = pd.concat(dfs_coords)
-    # Add ID for each ROI coordinates. The Numeric ID already exists as 
+    # Add ID for each ROI coordinates. The Numeric ID already exists as
     # column named 'index' (note: not as the index of the dataframe).
     df_coords = df_coords.rename(columns={'index': 'RoiID'})
     df_coords['RoiID'] = df_coords['RoiID'].astype(str)
@@ -185,31 +189,39 @@ def compile_roilist(
 
 # TODO:
 #   - can be written using pandas.DataFrame.from_records()
-def extract_channel_info(channel_info_list) -> Dict:
+def extract_channel_info(
+    channel_info_list: Optional[List[Dict[str, Any]]]
+) -> Optional[Dict[str, List[Any]]]:
     """
     From a pepfile, convert channel info from list of {k: v}'s to {key: list of v's}
     """
     channels = channel_info_list
-    keys = channels[0].keys()
-    return {
-        key: [ch[key] for ch in channels]
-        for key in keys
-    }
+    if channels is not None:
+        keys = channels[0].keys()
+        return {
+            key: [ch[key] for ch in channels]
+            for key in keys
+        }
+    else:
+        return None
 
-def main(imageset_paths: List[str], output_path: str, chinfo_dict=None
-    ) -> None:
+def main(
+    imageset_paths: List[str],
+    output_path: str,
+    chinfo_dict: Optional[Dict] = None
+) -> None:
     # TODO:
     #   If refactoring roi_drawer(), pick some sensible defaults.
     """
     Combined ROI information will be saved as file <output_path>. A tmp
     directory will be created in the same dir which <output_path> is in,
-    to store individual csv files for each Imageset. 
-    """    
+    to store individual csv files for each Imageset.
+    """
     imageset_records = (
         pd.DataFrame({'ImagesetFilepath': imageset_paths})
         .to_dict('records')
     )
-    
+
     output_pathobj = Path(output_path)
 
     # Create a new tmp dir for this specific drawing action. Note that
@@ -219,15 +231,15 @@ def main(imageset_paths: List[str], output_path: str, chinfo_dict=None
         shutil.rmtree(tmp_dir)
     tmp_dir.mkdir(exist_ok=True, parents=True)
     roi_drawer(imageset_records, tmp_dir, chinfo_dict)
-    
-    compile_roilist(tmp_dir, output_path)
+
+    compile_roilist(str(tmp_dir), output_path)
 
 
 if __name__ == '__main__':
     if 'snakemake' in globals():
         chinfo_dict = extract_channel_info(
             snakemake.config['input']['channels'])
-        
-        main(snakemake.input.images[:], 
-             snakemake.output.csv, 
+
+        main(snakemake.input.images[:],
+             snakemake.output.csv,
              chinfo_dict=chinfo_dict)
