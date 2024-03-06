@@ -2,3 +2,4 @@
 **/.snakemake/*
 **/data/*
 **/results/*
+**/.envs/*
