@@ -64,6 +64,11 @@ rule all_profiles:
                          binsize=config['bam_to_bigwig']['binsizes'],
                          ext=["pdf", "tab"])
 
+rule all_alu_bw:
+    input:
+        lambda w: expand("results/alu_bigwig_split/{alu_name}.bw",
+                         alu_name=get_checkpoint_aluname(w))
+
 rule all:
     input:
         rules.all_profiles.input,
@@ -259,4 +264,33 @@ rule plot_profile:
         --endLabel "End" \
         --plotTitle {wildcards.alu_name} \
         --yAxisLabel reads \
+        """
+
+
+# calculate Alu density
+rule alu_bedgraph:
+    input:
+        bed="results/alu_bed_split/{alu_name}.bed",
+        genome=config["genome"]["hg38"],
+    output:
+        "results/alu_bedgraph_split/{alu_name}.bedgraph"
+    conda:
+        "envs/bedtools.yaml"
+    shell:
+        """
+        bedtools genomecov -bg -i {input.bed} -g {input.genome} > {output}
+        """
+
+
+rule alu_bigwig:
+    input:
+        alu="results/alu_bedgraph_split/{alu_name}.bedgraph",
+        genome=config["genome"]["hg38"],
+    output:
+        "results/alu_bigwig_split/{alu_name}.bw"
+    conda:
+        "envs/bedgraphtobigwig.yaml"
+    shell:
+        """
+        bedGraphToBigWig {input.alu} {input.genome} {output}
         """

@@ -1,5 +1,7 @@
 alu_families_fasta: /projects/BRANGWYNNE/users/yichec/resources/genomics/alu/dfam_alu.fa
 rmsk: /projects/BRANGWYNNE/tools/genomics/rmsk/hg38.repeatmasker.bed
+genome:
+  hg38: /projects/BRANGWYNNE/tools/genomics/genomes/STAR/hg38/GRCh38.p13_STAR/chrNameLength.txt
 
 # If truncation is set to 0, will use the full bedfile.
 alu_annotation_truncation: 10000
