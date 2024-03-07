@@ -69,6 +69,19 @@ rule all_alu_bw:
         lambda w: expand("results/alu_bigwig_split/{alu_name}.bw",
                          alu_name=get_checkpoint_aluname(w))
 
+rule all_alu_matrix:
+    input:
+        lambda w: expand("results/alu_matrix/{alu_name}_{binsize}bp.gz",
+                         alu_name=get_checkpoint_aluname(w),
+                         binsize=config['bam_to_bigwig']['binsizes'],)
+
+rule all_alu_profiles:
+    input:
+        lambda w: expand("results/alu_profile/{alu_name}_{binsize}bp.{ext}",
+                         alu_name=get_checkpoint_aluname(w),
+                         binsize=config['bam_to_bigwig']['binsizes'],
+                         ext=["pdf", "tab"])
+
 rule all:
     input:
         rules.all_profiles.input,
@@ -293,4 +306,58 @@ rule alu_bigwig:
     shell:
         """
         bedGraphToBigWig {input.alu} {input.genome} {output}
+        """
+
+
+rule alu_compute_matrix:
+    input:
+        bigwig="results/alu_bigwig_split/{alu_name}.bw", 
+        region="results/alu_bed_split/{alu_name}.bed",
+    output:
+        "results/alu_matrix/{alu_name}_{binsize}bp.gz"
+    params:
+        before=config["compute_matrix"]["params"]["before"],
+        after=config["compute_matrix"]["params"]["after"],
+        body=config["compute_matrix"]["params"]["body"],
+    threads:
+        config["compute_matrix"]["cores"]
+    conda: 
+        "envs/deeptools.yaml"
+    shell:
+        """
+        computeMatrix scale-regions \
+        --scoreFileName {input.bigwig} \
+        --regionsFileName {input.region} \
+        --regionBodyLength {params.body} \
+        --startLabel start \
+        --endLabel end \
+        -b {params.before} -a {params.after} \
+        --binSize {wildcards.binsize} \
+        --skipZeros \
+        --samplesLabel {wildcards.alu_name} \
+        -o {output} \
+        -p {threads}
+        """
+
+
+rule alu_plot_profile:
+    input:
+        "results/alu_matrix/{alu_name}_{binsize}bp.gz",
+    output:
+        plot="results/alu_profile/{alu_name}_{binsize}bp.pdf",
+        data="results/alu_profile/{alu_name}_{binsize}bp.tab",
+    conda:
+        "envs/deeptools.yaml"
+    shell:
+        """
+        plotProfile \
+        -m {input} \
+        -out {output.plot} \
+        --outFileNameData {output.data} \
+        --dpi 300 \
+        --plotType lines \
+        --startLabel "Start" \
+        --endLabel "End" \
+        --plotTitle {wildcards.alu_name} \
+        --yAxisLabel reads \
         """
