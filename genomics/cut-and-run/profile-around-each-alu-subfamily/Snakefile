@@ -9,7 +9,18 @@ def get_all_sample_something(something):
     samples = config["samples"]
     return [s[something] for s in samples]
 
+def get_all_sample_something_by_name(something, names):
+    samples = config["samples"]
+    somethings = []
+    for n in names:
+        for s in samples:
+            if s["name"] == n:
+                somethings.append(s[something])
+                break
+    return somethings
+
 SAMPLE_NAMES = get_all_sample_something("name")
+SAMPLE_DESC = get_all_sample_something_by_name("desc", SAMPLE_NAMES)
 
 #
 # This can be used inside an input function, to get {AluName}.
@@ -22,12 +33,6 @@ def get_checkpoint_aluname(wildcards):
 #
 # top-level target rules
 #
-rule all:
-    input:
-        lambda w: expand("results/heatmap/{alu_name}_{binsize}bp.png", 
-                         alu_name=get_checkpoint_aluname(w),
-                         binsize=config['bam_to_bigwig']['binsizes'])
-
 rule all_split_alu:
     input:
         lambda w: expand("results/alu_bed_split/{alu_name}.bed",
@@ -44,6 +49,25 @@ rule all_matrix:
         lambda w: expand("results/matrix/{alu_name}_{binsize}bp.gz", 
                          alu_name=get_checkpoint_aluname(w),
                          binsize=config['bam_to_bigwig']['binsizes'])
+
+rule all_heatmaps:
+    input:
+        lambda w: expand("results/heatmap/{alu_name}_{binsize}bp.{ext}",
+                         alu_name=get_checkpoint_aluname(w),
+                         binsize=config['bam_to_bigwig']['binsizes'],
+                         ext=["pdf", "gz"])
+
+rule all_profiles:
+    input:
+        lambda w: expand("results/profile/{alu_name}_{binsize}bp.{ext}",
+                         alu_name=get_checkpoint_aluname(w),
+                         binsize=config['bam_to_bigwig']['binsizes'],
+                         ext=["pdf", "tab"])
+
+rule all:
+    input:
+        rules.all_profiles.input,
+        rules.all_heatmaps.input,
 
 rule all_envs:
     """
@@ -164,17 +188,24 @@ rule compute_matrix:
     params:
         before=config["compute_matrix"]["params"]["before"],
         after=config["compute_matrix"]["params"]["after"],
+        body=config["compute_matrix"]["params"]["body"],
+        samplesLabel=" ".join(SAMPLE_DESC),
     threads:
         config["compute_matrix"]["cores"]
     conda: 
         "envs/deeptools.yaml"
     shell:
         """
-        computeMatrix reference-point \
-        -S {input.bigwig} \
-        -R {input.region} \
+        computeMatrix scale-regions \
+        --scoreFileName {input.bigwig} \
+        --regionsFileName {input.region} \
+        --regionBodyLength {params.body} \
+        --startLabel start \
+        --endLabel end \
         -b {params.before} -a {params.after} \
+        --binSize {wildcards.binsize} \
         --skipZeros \
+        --samplesLabel {params.samplesLabel} \
         -o {output} \
         -p {threads}
         """
@@ -184,16 +215,48 @@ rule plot_heatmap:
     input:
         "results/matrix/{alu_name}_{binsize}bp.gz",
     output:
-        "results/heatmap/{alu_name}_{binsize}bp.png"
+        plot="results/heatmap/{alu_name}_{binsize}bp.pdf",
+        data="results/heatmap/{alu_name}_{binsize}bp.gz",
     conda: 
         "envs/deeptools.yaml"
     shell:
         """
         plotHeatmap \
         -m {input} \
-        -out {output} \
-        --colorMap viridis \
+        -out {output.plot} \
+        --outFileNameMatrix {output.data} \
+        --colorMap cividis \
         --missingDataColor "#FFF6EB" \
+        --dpi 300 \
+        --heatmapHeight 8 \
+        --whatToShow "heatmap only" \
+        --boxAroundHeatmaps no \
+        --xAxisLabel " " \
+        --startLabel "Start" \
+        --endLabel "End" \
+        --labelRotation 45 \
         --plotTitle {wildcards.alu_name} \
-        --heatmapHeight 15
+        """
+
+
+rule plot_profile:
+    input:
+        "results/matrix/{alu_name}_{binsize}bp.gz",
+    output:
+        plot="results/profile/{alu_name}_{binsize}bp.pdf",
+        data="results/profile/{alu_name}_{binsize}bp.tab",
+    conda:
+        "envs/deeptools.yaml"
+    shell:
+        """
+        plotProfile \
+        -m {input} \
+        -out {output.plot} \
+        --outFileNameData {output.data} \
+        --dpi 300 \
+        --plotType lines \
+        --startLabel "Start" \
+        --endLabel "End" \
+        --plotTitle {wildcards.alu_name} \
+        --yAxisLabel reads \
         """
